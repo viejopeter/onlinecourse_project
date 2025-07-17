@@ -1,0 +1,26 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+venv/
+
+# IDE settings
+.idea/
+.vscode/
+
+# Docker related files
+*.dockerfile
+docker-compose.override.yml
+
+#Enviroment variables
+.env
+*.env
+
+# Django specific
+*.sqlite3
+*.log
+*.pot
+*.pyc
+db.sqlite3
