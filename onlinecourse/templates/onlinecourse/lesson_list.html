@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lesson List</title>
+</head>
+<body>
+<h1>Lesson list</h1>
+<form action="{% url 'onlinecourse:create_update_lesson' %}" method="get">
+    {% csrf_token %}
+    <button type="submit">Create</button>
+</form>
+{% if lesson_list %}
+    {% for lesson in lesson_list %}
+        <div class="container">
+           <div class="row">
+               <div class="column">
+                   {{ lesson.title }}
+               </div>
+               <div class="column">
+                   {{ lesson.course.name }}
+               </div>
+           </div>
+        </div>
+    {% endfor %}
+{% else %}
+    There is not lessons available
+{% endif %}
+</body>
+</html>

@@ -7,7 +7,34 @@
     <title>Online Course</title>
 </head>
 <body>
+<header>
+    <ul>
 
+{% if user.is_authenticated %}
+       <div class="rightalign">
+           <div class="dropdown">
+               <button class="dropbtn">{{ user.first_name }}</button>
+               <div class="dropdown-content">
+                 <a href="{% url 'onlinecourse:logout' %}">Logout</a>
+               </div>
+           </div>
+       </div>
+    {% else %}
+    <div class="rightalign">
+           <div class="dropdown">
+               <form action="{% url "onlinecourse:registration" %}" method="get">
+                     <button type="submit" class="dropbtn">Visitor</button>
+                     <div class="dropdown-content">
+                         <a href="{% url "onlinecourse:registration" %}">Signup</a>
+                         <a href="{% url 'onlinecourse:login' %}">Login</a>
+                     </div>
+               </form>
+           </div>
+       </div>
+{% endif %}
+
+    </ul>
+</header>
 <h2>Popular courses list</h2>
 {% if course_list %}
     <ul>

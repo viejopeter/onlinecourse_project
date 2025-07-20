@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Lessons</title>
+</head>
+<body>
+<h1>Lesson</h1>
+<form action="{% url "onlinecourse:create_update_lesson" %}" method="post">
+    <label for="title">Title</label>
+    <input type="text" placeholder="Title" name="title" required>
+    <label for="course">Course</label>
+    <select name="course" id="course">
+        {% for course in courses_list %}
+            <option value="{{ course.id }}">{{ course.name }}</option>
+        {% endfor %}
+    </select>
+    <label for="content">Content</label>
+    <textarea name="content"></textarea>
+    {% csrf_token %}
+    <button type="submit" class="button">Send</button>
+</form>
+</body>
+</html>
