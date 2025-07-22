@@ -1,21 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'onlinecourse/course.css' %}">
-</head>
-<body>
-    <div class="card">
-        <h2>{{ course.name }}</h2>
-        <h5>{{ course.description }}</h5>
+{% extends 'onlinecourse/base.html' %}
+{% block title %}Detail Course{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Course Title -->
+    <h2 class="mb-4">{{ course.name }}</h2>
+
+    <!-- Lessons -->
+    <div class="mb-5">
+        {% for lesson in course.lesson_set.all %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Lesson {{ lesson.order|add:1 }}: {{ lesson.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ lesson.content }}</p>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-warning">No lessons available for this course.</div>
+        {% endfor %}
     </div>
-    <h2>Lessons: </h2>
-    {% for lesson in course.lesson_set.all %}
-    <div class="card">
-        <h5>Lesson {{lesson.order}} : {{lesson.title}}</h5>
-        <p>{{lesson.content}}</p>
-    </div>
-    {% endfor %}
-</body>
-</html>
+
+    <!-- Exam Section (Only if authenticated) -->
+    {% if user.is_authenticated %}
+        <div class="text-center mb-3">
+            <button class="btn btn-lg btn-outline-primary" data-toggle="collapse" data-target="#exam">
+                Start Exam
+            </button>
+        </div>
+
+        <div id="exam" class="collapse">
+            <form id="questionform" action="{% url 'onlinecourse:submit' course.id %}" method="POST">
+                {% csrf_token %}
+
+                {% for question in course.question_set.all %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">{{ question.content }}</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for choice in question.choice_set.all %}
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" name="choice_{{ choice.id }}" class="form-check-input"
+                                           id="choice_{{ choice.id }}" value="{{ choice.id }}">
+                                    <label class="form-check-label" for="choice_{{ choice.id }}">
+                                        {{ choice.content }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="alert alert-info">No questions available for this course.</div>
+                {% endfor %}
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success btn-lg">Submit Exam</button>
+                </div>
+            </form>
+        </div>
+    {% else %}
+        <div class="alert alert-secondary mt-4">Please log in to take the exam.</div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'onlinecourse/base.html' %}
+{% block title %}Result{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Score Alert -->
+    {% if grade > 80 %}
+        <div class="alert alert-success text-center" role="alert">
+            <h4 class="alert-heading">Congratulations, {{ user.first_name }}! 🎉</h4>
+            <p>You passed the exam with a score of <strong>{{ grade }}/100</strong>.</p>
+        </div>
+    {% else %}
+        <div class="alert alert-danger text-center" role="alert">
+            <h4 class="alert-heading">Sorry, {{ user.first_name }}! 😔</h4>
+            <p>You failed the exam with a score of <strong>{{ grade }}/100</strong>.</p>
+        </div>
+        <div class="text-center mb-4">
+            <a class="btn btn-outline-danger" href="{% url 'onlinecourse:course_details' course.id %}">Re-test</a>
+        </div>
+    {% endif %}
+
+    <!-- Exam Breakdown -->
+    <h5 class="mb-3">Your Exam Results</h5>
+    {% for question in course.question_set.all %}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">{{ question.content }}</h5>
+            </div>
+            <div class="card-body">
+                {% for choice in question.choice_set.all %}
+                    {% if choice.is_correct and choice in choices %}
+                        <div class="alert alert-success py-2 mb-2">✅ Correct answer selected: <strong>{{ choice.content }}</strong></div>
+                    {% elif choice.is_correct and choice not in choices %}
+                        <div class="alert alert-warning py-2 mb-2">⚠️ Correct but not selected: <strong>{{ choice.content }}</strong></div>
+                    {% elif not choice.is_correct and choice in choices %}
+                        <div class="alert alert-danger py-2 mb-2">❌ Wrong answer selected: <strong>{{ choice.content }}</strong></div>
+                    {% else %}
+                        <div class="text-muted">{{ choice.content }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

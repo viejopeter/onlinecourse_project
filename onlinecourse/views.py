@@ -3,48 +3,13 @@ from django.http import HttpResponse,HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
-from onlinecourse.models import Course, Lesson
+from django.views import generic
+
+from onlinecourse.models import Course, Lesson, Enrollment, Submission
 import logging
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
-# Create your views here.
-def course_list(request):
-    context = {}
-    # If request method is POST
-    if request.method == 'GET':
-        # Using the objects model manage to read all course list
-        # and sort them by total_enrollment descending
-        course_list = Course.objects.order_by('-total_enrollment')[:10]
-        context['course_list'] = course_list
-        return render(request, 'onlinecourse/course_list.html', context)
-    return None
-def enroll(request, course_id):
-    # If request method is POST
-    if request.method == 'POST':
-        # First try to read the course object
-        # If could be found, raise a 404 exception
-        course = get_object_or_404(Course, pk=course_id)
-        # Increase the enrollment by 1
-        course.total_enrollment += 1
-        course.save()
-        # Return a HTTP response redirecting user to course list view
-        return HttpResponseRedirect(reverse(viewname='onlinecourse:course_details', args=(course.id,)))
-    else:
-        return HttpResponse('Inavlid request method', status=405)
-
-def course_details(request, course_id):
-    context = {}
-    if request.method == 'GET':
-        try:
-            course = Course.objects.get(pk=course_id)
-            context['course'] = course
-            # Use render() method to generate HTML page by combining
-            # template and context
-            return render(request, 'onlinecourse/course_detail.html', context)
-        except Course.DoesNotExist:
-            # If course does not exist, throw a Http404 error
-            raise Http404("No course matches the given id.")
 def login_request(request):
     context = {}
     if request.method == 'POST':
@@ -96,6 +61,54 @@ def register_request(request):
         else:
             context['message'] = 'User already exists.'
             return render(request,'onlinecourse/user_registration.html',context)
+
+class CourseListView(generic.ListView):
+    template_name = 'onlinecourse/course_list.html'
+    context_object_name = 'course_list'
+
+    def get_queryset(self):
+        user = self.request.user
+        courses = Course.objects.order_by('-total_enrollment')[:10]
+        for course in courses:
+            if user.is_authenticated:
+                course.is_enrolled = check_if_enrolled(user, course)
+        return courses
+
+def check_if_enrolled(user, course):
+    is_enrolled = False
+    if user.id is not None:
+        # Check if user enrolled
+        num_results = Enrollment.objects.filter(user=user, course=course).count()
+        if num_results > 0:
+            is_enrolled = True
+    return is_enrolled
+
+def enroll(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    user = request.user
+
+    is_enrolled = check_if_enrolled(user, course)
+    if not is_enrolled and user.is_authenticated:
+        # Create an enrollment
+        Enrollment.objects.create(user=user, course=course, mode='honor')
+        course.total_enrollment += 1
+        course.save()
+
+    return HttpResponseRedirect(reverse(viewname='onlinecourse:course_details', args=(course.id,)))
+
+def course_details(request, course_id):
+    context = {}
+    if request.method == 'GET':
+        try:
+            course = Course.objects.get(pk=course_id)
+            context['course'] = course
+            # Use render() method to generate HTML page by combining
+            # template and context
+            return render(request, 'onlinecourse/course_detail.html', context)
+        except Course.DoesNotExist:
+            # If course does not exist, throw a Http404 error
+            raise Http404("No course matches the given id.")
+
 def lesson_list(request):
     context = {}
     if request.method == 'GET':
@@ -119,6 +132,50 @@ def create_update_lesson(request):
         lesson_list = Lesson.objects.all()
         context['lesson_list'] = lesson_list
         return render(request,"onlinecourse/lesson_list.html",context)
+
+
+def submit(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    user = request.user
+    enrollment = Enrollment.objects.get(user=user, course=course)
+    submission = Submission.objects.create(enrollment=enrollment)
+    choices = extract_answers(request)
+    submission.choices.set(choices)
+    submission_id = submission.id
+    return HttpResponseRedirect(reverse(viewname='onlinecourse:exam_result', args=(course_id, submission_id,)))
+
+
+def extract_answers(request):
+    submitted_anwsers = []
+    for key in request.POST:
+        if key.startswith('choice'):
+            value = request.POST[key]
+            choice_id = int(value)
+            submitted_anwsers.append(choice_id)
+    return submitted_anwsers
+
+
+def show_exam_result(request, course_id, submission_id):
+    context = {}
+    course = get_object_or_404(Course, pk=course_id)
+    submission = Submission.objects.get(id=submission_id)
+    choices = submission.choices.all()
+
+    total_score = 0
+    questions = course.question_set.all()
+
+    for question in questions:
+        correct_choices = question.choice_set.filter(is_correct=True)
+        selected_choices = choices.filter(question=question)
+
+        if set(correct_choices) == set(selected_choices):
+            total_score += question.grade
+
+    context['course'] = course
+    context['grade'] = total_score
+    context['choices'] = choices
+
+    return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
 
 
 

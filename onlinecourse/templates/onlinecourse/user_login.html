@@ -1,24 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'onlinecourse/course.css' %}">
-</head>
-<body>
-<form action="{% url "onlinecourse:login" %}" method="post">
-    {% csrf_token %}
-    <div class="container">
-        <h1>Login</h1>
-        {{ message }}
-        <label for="username"><b>User Name</b></label>
-        <input type="text" placeholder="Username" name="username" required>
-        <label for="password"><b>Password</b></label>
-        <input type="password" placeholder="Password" name="psw" required>
-        <div>
-            <button class="button" type="submit">Login</button>
+{% extends 'onlinecourse/base.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 400px;">
+    <h2 class="mb-4 text-center">Login</h2>
+
+    {% if message %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endif %}
+
+    <form action="{% url 'onlinecourse:login' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="username"><b>Username</b></label>
+            <input class="form-control" type="text" name="username" placeholder="Username" required>
         </div>
-    </div>
-</form>
-</body>
-</html>
+        <div class="form-group">
+            <label for="psw"><b>Password</b></label>
+            <input class="form-control" type="password" name="psw" placeholder="Password" required>
+        </div>
+        <button type="submit" class="btn btn-success btn-block">Login</button>
+    </form>
+</div>
+{% endblock %}

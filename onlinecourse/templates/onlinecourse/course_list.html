@@ -1,65 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'onlinecourse/course.css' %}">
-    <meta charset="UTF-8">
-    <title>Online Course</title>
-</head>
-<body>
-<header>
-    <ul>
+{% extends 'onlinecourse/base.html' %}
+{% block title %}Popular Courses List{% endblock %}
 
-{% if user.is_authenticated %}
-       <div class="rightalign">
-           <div class="dropdown">
-               <button class="dropbtn">{{ user.first_name }}</button>
-               <div class="dropdown-content">
-                 <a href="{% url 'onlinecourse:logout' %}">Logout</a>
-               </div>
-           </div>
-       </div>
-    {% else %}
-    <div class="rightalign">
-           <div class="dropdown">
-               <form action="{% url "onlinecourse:registration" %}" method="get">
-                     <button type="submit" class="dropbtn">Visitor</button>
-                     <div class="dropdown-content">
-                         <a href="{% url "onlinecourse:registration" %}">Signup</a>
-                         <a href="{% url 'onlinecourse:login' %}">Login</a>
-                     </div>
-               </form>
-           </div>
-       </div>
-{% endif %}
+{% block content %}
+<h2 class="mb-4">Popular Courses</h2>
 
-    </ul>
-</header>
-<h2>Popular courses list</h2>
 {% if course_list %}
-    <ul>
-    {% for course in course_list %}
-       <div class="container">
-          <div class="row">
-            <div class="column-33">
-                <img src="{{ course.image.url }}" width="360" height="360">
+    <div class="row">
+        {% for course in course_list %}
+            <div class="col-md-12 mb-4">
+                <div class="card shadow-sm">
+                    <div class="row no-gutters">
+                        <div class="col-md-4 p-3">
+                            <img src="{{ course.image.url }}" class="img-fluid rounded" alt="{{ course.name }}">
+                        </div>
+                        <div class="col-md-8 p-3">
+                            <h4 class="card-title"><b>{{ course.name }}</b></h4>
+                            <p class="card-text text-success"><strong>{{ course.total_enrollment }} enrolled</strong></p>
+                            <p class="card-text">{{ course.description }}</p>
+                            <form action="{% url 'onlinecourse:enroll' course.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">
+                                    {% if course.is_enrolled %}Enter{% else %}Enroll{% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="column-66">
-                <h1 class="xlarge-font"><b>{{ course.name }}</b></h1>
-                <p style="color:MediumSeaGreen;"><b>{{course.total_enrollment}} enrolled</b></p>
-                <p> {{ course.description }}</p>
-                <form action="{% url 'onlinecourse:enroll' course.id %}" method="post">
-                {% csrf_token %}
-                <input class="button"  type="submit"  value="Enroll">
-              </form>
-            </div>
-          </div>
-       </div>
-       <hr>
-    {% endfor %}
-    </ul>
+        {% endfor %}
+    </div>
 {% else %}
-    <p>No courses are available.</p>
+    <p class="text-muted">No courses are available.</p>
 {% endif %}
-</body>
-</html>
+{% endblock %}
